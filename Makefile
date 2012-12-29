@@ -3,13 +3,12 @@ CFLAGS = -W -Wall -Wextra -Wunreachable-code -Wstrict-prototypes -Wmissing-proto
 # LDFLAGS: flags passed to the compiler for use during linking
 LDFLAGS = -Wl
 # LIBS: libraries to link with
-LIBS = -lefence
+LIBS = -lefence -lfl
 SOURCES = $(wildcard *.c)
 OBJECTS = $(SOURCES:.c=.o)
 EXE = foolish
 
-# all: $(EXE)
-all: parser
+all: $(EXE)
 
 $(EXE): $(OBJECTS)
 	$(CC) $^ -o $@ $(LDFLAGS) $(LIBS)
@@ -18,9 +17,6 @@ $(EXE): $(OBJECTS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Parsers
-parser: parse.tab.c parse.tab.h lex.yy.c
-	$(CC) parse.tab.c lex.yy.c -lfl -o parser
-
 parse.tab.c parse.tab.h: parse.y
 	bison -d $<
 
