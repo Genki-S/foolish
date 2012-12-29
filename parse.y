@@ -27,6 +27,7 @@ typedef struct {
 command* command_queue[COMMAND_QUEUE_SIZE];
 int q_head, q_tail;
 
+void init_gv();
 void register_command(char *str, int fdin, int fdout, int fderr, bool pipein, bool pipeout);
 void register_command_gv();
 void push_command(command *c);
@@ -80,6 +81,7 @@ input:
 		{
 			register_command_gv();
 		}
+	 | single_command { g_pipeout = true; register_command_gv(); init_gv(); g_pipein = true; } '|' input
 	 | '\n'
 	 ;
 
@@ -122,13 +124,18 @@ redirection_list:
 
 %%
 
-main() {
+void init_gv()
+{
 	strcpy(g_command, "");
 	g_fdin = STDIN_FILENO;
 	g_fdout = STDOUT_FILENO;
 	g_fderr = STDERR_FILENO;
 	g_pipein = false;
 	g_pipeout = false;
+}
+
+main() {
+	init_gv();
 	yyparse();
 	command* com;
 	while ( (com = pop_command()) != NULL ) {
