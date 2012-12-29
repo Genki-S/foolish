@@ -1,4 +1,6 @@
 *.o
 parse.tab.*
+lex.yy.c
+foolish
 
 *.swp
