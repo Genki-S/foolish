@@ -15,6 +15,7 @@ void register_command(char *bin, int argc, char **argv, int fdin, int fdout, int
 	strcpy(c->bin, bin);
 	c->argc = argc;
 	c->argv = argv;
+	c->argv[argc] = NULL;
 	c->fdin = fdin;
 	c->fdout = fdout;
 	c->fderr = fderr;
