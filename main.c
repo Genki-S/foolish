@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "command.h"
+#include "path.h"
 
 extern struct yy_buffer_state;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
@@ -24,10 +25,12 @@ void init_gv()
 int main(int argc, char const* argv[])
 {
 	char *prompt = "% ";
-
 	char *input = NULL;
 	size_t len = 0;
 	ssize_t read;
+
+	init_path();
+
 	while (true) {
 		printf("%s", prompt);
 		read = getline(&input, &len, stdin);
