@@ -1,6 +1,6 @@
 D [0-9]
 L [a-zA-Z_]
-S [.\-\\]
+S [./'"\-\\]
 
 %{
 #include "parse.tab.h"

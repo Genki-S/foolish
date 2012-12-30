@@ -14,7 +14,9 @@ extern YY_BUFFER_STATE yy_scan_string(char *);
 
 void init_gv()
 {
-	strcpy(g_command, "");
+	strcpy(g_bin, "");
+	g_argc = 0;
+	g_argv = malloc(sizeof(char *) * COMMAND_MAX_ARGC);
 	g_fdin = STDIN_FILENO;
 	g_fdout = STDOUT_FILENO;
 	g_fderr = STDERR_FILENO;
@@ -24,6 +26,7 @@ void init_gv()
 
 int main(int argc, char const* argv[])
 {
+	int i;
 	char *prompt = "% ";
 	char *input = NULL;
 	size_t len = 0;
@@ -44,9 +47,19 @@ int main(int argc, char const* argv[])
 		printf("Parse end.\n");
 		command* com;
 		while ( (com = pop_command()) != NULL ) {
-			printf("Command: %s\n", com->str);
+			printf("Command: %s\n", com->bin);
+			printf("Args:\n");
+			for (i = 0; i < com->argc; i++) {
+				printf("\t%s\n", com->argv[i]);
+			}
 			printf("In: %d, Out: %d, Err: %d\n", com->fdin, com->fdout, com->fderr);
 			printf("PipeIn: %d, PipeOut: %d\n", com->pipein, com->pipeout);
+
+			/* Clean Up */
+			for (i = 0; i < argc; i++) {
+				free(com->argv[i]);
+			}
+			free(com->argv);
 			free(com);
 		}
 	}

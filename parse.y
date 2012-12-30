@@ -10,10 +10,6 @@
 
 void yyerror(char *s);
 
-char g_command[COMMAND_STRLEN] = { '\0' };
-int g_fdin, g_fdout, g_fderr;
-bool g_pipein, g_pipeout;
-
 %}
 
 %union {
@@ -45,8 +41,11 @@ single_command:
 	   ;
 
 word_list:
-		 WORD { strcat(g_command, " "); strcat(g_command, $1); }
-		 | word_list WORD { strcat(g_command, " "); strcat(g_command, $2); }
+		 WORD { strcpy(g_bin, $1); }
+		 | word_list WORD {
+			g_argv[g_argc] = malloc(sizeof(char) * (strlen($2) + 1));
+			strcpy(g_argv[g_argc], $2);
+			++g_argc; }
 		 ;
 
 redirection:

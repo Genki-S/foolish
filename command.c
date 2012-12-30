@@ -9,10 +9,12 @@
 command* command_queue[COMMAND_QUEUE_SIZE];
 int q_head, q_tail;
 
-void register_command(char *str, int fdin, int fdout, int fderr, bool pipein, bool pipeout)
+void register_command(char *bin, int argc, char **argv, int fdin, int fdout, int fderr, bool pipein, bool pipeout)
 {
 	command* c = malloc(sizeof(command));
-	strcpy(c->str, str);
+	strcpy(c->bin, bin);
+	c->argc = argc;
+	c->argv = argv;
 	c->fdin = fdin;
 	c->fdout = fdout;
 	c->fderr = fderr;
@@ -22,7 +24,7 @@ void register_command(char *str, int fdin, int fdout, int fderr, bool pipein, bo
 }
 void register_command_gv(void)
 {
-	register_command(g_command, g_fdin, g_fdout, g_fderr, g_pipein, g_pipeout);
+	register_command(g_bin, g_argc, g_argv, g_fdin, g_fdout, g_fderr, g_pipein, g_pipeout);
 }
 void push_command(command *c)
 {
