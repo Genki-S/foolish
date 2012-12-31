@@ -15,7 +15,7 @@ extern YY_BUFFER_STATE yy_scan_string(char *);
 void init_gv()
 {
 	strcpy(g_bin, "");
-	g_argc = 0;
+	g_argc = 1;
 	g_argv = malloc(sizeof(char *) * COMMAND_MAX_ARGC);
 	g_fdin = STDIN_FILENO;
 	g_fdout = STDOUT_FILENO;

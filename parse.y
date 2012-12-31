@@ -41,7 +41,10 @@ single_command:
 	   ;
 
 word_list:
-		 WORD { strcpy(g_bin, $1); }
+		 WORD {
+			strcpy(g_bin, $1);
+			g_argv[0] = malloc(sizeof(char) * (strlen($1) + 1));
+			strcpy(g_argv[0], $1); }
 		 | word_list WORD {
 			g_argv[g_argc] = malloc(sizeof(char) * (strlen($2) + 1));
 			strcpy(g_argv[g_argc], $2);
