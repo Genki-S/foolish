@@ -19,15 +19,15 @@ void init_path(void)
 	}
 	row = malloc(sizeof(char) * MAX_PATH_NUM * MAX_PATH_LENGTH);
 	fgets(row, sizeof(char) * MAX_PATH_NUM * MAX_PATH_LENGTH, fp);
-	paths[0] = row;
-	path_size = 1;
+	g_paths[0] = row;
+	g_path_size = 1;
 	len = strlen(row);
 	for (i = 0; i < len; i++) {
 		if (row[i] == PATH_DELIMITER) {
 			row[i] = '\0';
 		}
 		if (i > 0 && row[i-1] == '\0') {
-			paths[path_size++] = &(row[i]);
+			g_paths[g_path_size++] = &(row[i]);
 		}
 	}
 }
@@ -35,7 +35,7 @@ void init_path(void)
 void print_paths(void)
 {
 	int i;
-	for (i = 0; i < path_size; i++) {
-		printf("%s\n", paths[i]);
+	for (i = 0; i < g_path_size; i++) {
+		printf("%s\n", g_paths[i]);
 	}
 }

@@ -12,8 +12,8 @@
 #else
 	#define EXTERN extern
 #endif
-EXTERN int path_size;
-EXTERN char* paths[MAX_PATH_NUM];
+EXTERN int g_path_size;
+EXTERN char* g_paths[MAX_PATH_NUM];
 
 void init_path(void);
 void print_paths(void);
