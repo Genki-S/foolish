@@ -9,23 +9,35 @@
 command* command_queue[COMMAND_QUEUE_SIZE];
 int q_head, q_tail;
 
-void register_command(char *bin, int argc, char **argv, int fdin, int fdout, int fderr, bool pipein, bool pipeout)
+void init_gv()
+{
+	strcpy(g_bin, "");
+	g_argc = 1;
+	g_argv = malloc(sizeof(char *) * COMMAND_MAX_ARGC);
+	strcpy(g_infile, "");
+	strcpy(g_outfile, "");
+	strcpy(g_errfile, "");
+	g_pipein = false;
+	g_pipeout = false;
+}
+
+void register_command(char *bin, int argc, char **argv, char *infile, char *outfile, char *errfile, bool pipein, bool pipeout)
 {
 	command* c = malloc(sizeof(command));
 	strcpy(c->bin, bin);
 	c->argc = argc;
 	c->argv = argv;
 	c->argv[argc] = NULL;
-	c->fdin = fdin;
-	c->fdout = fdout;
-	c->fderr = fderr;
+	strcpy(c->infile, infile);
+	strcpy(c->outfile, outfile);
+	strcpy(c->errfile, errfile);
 	c->pipein = pipein;
 	c->pipeout = pipeout;
 	push_command(c);
 }
 void register_command_gv(void)
 {
-	register_command(g_bin, g_argc, g_argv, g_fdin, g_fdout, g_fderr, g_pipein, g_pipeout);
+	register_command(g_bin, g_argc, g_argv, g_infile, g_outfile, g_errfile, g_pipein, g_pipeout);
 }
 void push_command(command *c)
 {

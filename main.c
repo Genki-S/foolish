@@ -12,18 +12,6 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 extern int yyparse(void);
 extern YY_BUFFER_STATE yy_scan_string(char *);
 
-void init_gv()
-{
-	strcpy(g_bin, "");
-	g_argc = 1;
-	g_argv = malloc(sizeof(char *) * COMMAND_MAX_ARGC);
-	g_fdin = STDIN_FILENO;
-	g_fdout = STDOUT_FILENO;
-	g_fderr = STDERR_FILENO;
-	g_pipein = false;
-	g_pipeout = false;
-}
-
 int main(int argc, char const* argv[])
 {
 	int i;
@@ -54,7 +42,7 @@ int main(int argc, char const* argv[])
 			for (i = 0; i < com->argc; i++) {
 				printf("\t%s\n", com->argv[i]);
 			}
-			printf("In: %d, Out: %d, Err: %d\n", com->fdin, com->fdout, com->fderr);
+			printf("Infile: %s, Outfile: %s, Errfile: %s\n", com->infile, com->outfile, com->errfile);
 			printf("PipeIn: %d, PipeOut: %d\n", com->pipein, com->pipeout);
 
 			pid_t cpid;

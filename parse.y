@@ -55,16 +55,12 @@ redirection:
 		   '>' WORD
 			{
 				printf("Redirect to %s\n", $2);
-				g_fdout = open($2, O_CREAT | O_RDWR | O_TRUNC);
+				strcpy(g_outfile, $2);
 			}
 		   | '<' WORD
 			{
 				printf("Redirect from %s\n", $2);
-				if (access($2, R_OK) == -1) {
-					printf("Cannot read from file %s.\n", $2);
-					exit(EXIT_FAILURE);
-				}
-				g_fdin = open($2, O_RDONLY);
+				strcpy(g_infile, $2);
 			}
 		   ;
 
