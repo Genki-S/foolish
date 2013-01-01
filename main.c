@@ -2,10 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <error.h>
+#include <errno.h>
 
 #include "common.h"
 #include "command.h"
 #include "path.h"
+
+#define PIPE_FILE ".foolish_pipe"
 
 extern struct yy_buffer_state;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
@@ -34,6 +39,7 @@ int main(int argc, char const* argv[])
 		yyparse();
 		printf("Parse end.\n");
 		command* com;
+		int save_stdin_fd = -1, save_stdout_fd = -1;
 
 		/* Execute command (commands if pipe is used) */
 		while ( (com = pop_command()) != NULL ) {
@@ -66,8 +72,21 @@ int main(int argc, char const* argv[])
 					fprintf(stderr, "Command not found: %s\n", com->bin);
 					exit(EXIT_FAILURE);
 				}
-				printf("Execute file: %s\n", bin);
+				printf("Found executable file: %s\n", bin);
+
+				/* Pipe settings */
+				if (com->pipein) {
+					save_stdin_fd = dup(STDIN_FILENO);
+					close(STDIN_FILENO);
+					open(PIPE_FILE, O_RDONLY); /* opens with STDIN_FILENO */
+				}
+				if (com->pipeout) {
+					save_stdout_fd = dup(STDOUT_FILENO);
+					close(STDOUT_FILENO);
+					open(PIPE_FILE, O_CREAT | O_WRONLY | O_TRUNC, 0777); /* opens with STDOUT_FILENO */
+				}
 				execv(bin, com->argv);
+
 			}
 			/* parent */
 			int status;
@@ -76,6 +95,26 @@ int main(int argc, char const* argv[])
 				exit(EXIT_FAILURE);
 			}
 
+			/* CLEAN UP */
+
+			/* Restore file descriptors */
+			if (save_stdin_fd != -1) {
+				close(STDIN_FILENO);
+				dup2(save_stdin_fd, STDIN_FILENO);
+			}
+			if (save_stdout_fd != -1) {
+				close(STDOUT_FILENO);
+				dup2(save_stdout_fd, STDOUT_FILENO);
+			}
+			/* Remove temporary file for pipe */
+			if (com->pipein) {
+				if (remove(PIPE_FILE) == -1) {
+					error(0, errno, "Can't remove pipefile: %s\n", PIPE_FILE);
+					exit(EXIT_FAILURE);
+				}
+			}
+
+			/* Free memory */
 			for (i = 0; i < argc; i++) {
 				free(com->argv[i]);
 			}
