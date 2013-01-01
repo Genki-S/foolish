@@ -99,6 +99,11 @@ int main(int argc, char const* argv[])
 		if (read == -1) { /* Ctrl-D */
 			break;
 		}
+		if (strcmp(input, "exit\n") == 0) {
+			msg("Wise command. Obviously, you should use zsh :)\n");
+			break;
+		}
+
 		init_gv();
 		dprt("Parse start: %s\n", input);
 		yy_scan_string(input);
