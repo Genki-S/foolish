@@ -27,6 +27,7 @@ int main(int argc, char const* argv[])
 
 	init_path();
 
+	/* Prompt -> read -> analyze -> execute loop */
 	while (true) {
 		printf("%s", prompt);
 		read = getline(&input, &len, stdin);
@@ -42,6 +43,7 @@ int main(int argc, char const* argv[])
 		int save_stdin_fd = -1, save_stdout_fd = -1;
 
 		/* Execute command (commands if pipe is used) */
+		bool quit_command_queue = false;
 		while ( (com = pop_command()) != NULL ) {
 			printf("Command: %s\n", com->bin);
 			printf("Args:\n");
@@ -74,6 +76,32 @@ int main(int argc, char const* argv[])
 				}
 				printf("Found executable file: %s\n", bin);
 
+				/* Error check about file descriptors */
+				if (strcmp(com->infile, "") != 0 && com->pipein) {
+					fprintf(stderr, "Please do not redirect from file when a command has pipe input.\n");
+					exit(EXIT_FAILURE);
+				}
+				if (strcmp(com->outfile, "") != 0 && com->pipeout) {
+					fprintf(stderr, "Please do not redirect to file when a command has pipe output. Use tee instead.\n");
+					exit(EXIT_FAILURE);
+				}
+
+				/* Redirection settings */
+				if (strcmp(com->infile, "") != 0) { /* infile is specified */
+					if (access(com->infile, R_OK) != 0) {
+						error(0, errno, "Cannot read from %s", com->infile);
+						exit(EXIT_FAILURE);
+					}
+					save_stdin_fd = dup(STDIN_FILENO);
+					close(STDIN_FILENO);
+					open(com->infile, O_RDONLY); /* opens with STDIN_FILENO */
+				}
+				if (strcmp(com->outfile, "") != 0) {
+					save_stdout_fd = dup(STDOUT_FILENO);
+					close(STDOUT_FILENO);
+					open(com->outfile, O_CREAT | O_WRONLY | O_TRUNC, 0777); /* opens with STDOUT_FILENO */
+				}
+
 				/* Pipe settings */
 				if (com->pipein) {
 					save_stdin_fd = dup(STDIN_FILENO);
@@ -86,7 +114,6 @@ int main(int argc, char const* argv[])
 					open(PIPE_FILE, O_CREAT | O_WRONLY | O_TRUNC, 0777); /* opens with STDOUT_FILENO */
 				}
 				execv(bin, com->argv);
-
 			}
 			/* parent */
 			int status;
@@ -120,6 +147,13 @@ int main(int argc, char const* argv[])
 			}
 			free(com->argv);
 			free(com);
+
+			/* Stop executing command queue if an error has occurred */
+			if (WEXITSTATUS(status) == EXIT_FAILURE) {
+				while ( (com = pop_command()) != NULL );
+				fprintf(stderr, "Command queue is trashed\n");
+				break;
+			}
 		}
 	}
 	/* Termination */
