@@ -2,7 +2,7 @@
 #define _COMMON_H_
 
 /* Debug stuffs */
-#define DEBUG_ON
+// #define DEBUG_ON
 #ifdef DEBUG_ON
 	#define dprt(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
 #else

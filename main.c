@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 #include <error.h>
 #include <errno.h>
 
@@ -11,11 +12,75 @@
 #include "path.h"
 
 #define PIPE_FILE ".foolish_pipe"
+#define PIPE_FILE_COPY ".foolish_pipe_copy"
 
 extern struct yy_buffer_state;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 extern int yyparse(void);
 extern YY_BUFFER_STATE yy_scan_string(char *);
+
+/*
+ * To copy pipe output
+ * From: http://stackoverflow.com/questions/2180079/how-can-i-copy-a-file-on-unix-using-c
+ */
+int cp(const char *to, const char *from)
+{
+	int fd_to, fd_from;
+	char buf[4096];
+	ssize_t nread;
+	int saved_errno;
+
+	fd_from = open(from, O_RDONLY);
+	if (fd_from < 0)
+		return -1;
+
+	fd_to = open(to, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	if (fd_to < 0)
+		goto out_error;
+
+	while (nread = read(fd_from, buf, sizeof(buf)), nread > 0)
+	{
+		char *out_ptr = buf;
+		ssize_t nwritten;
+
+		do {
+			nwritten = write(fd_to, out_ptr, nread);
+
+			if (nwritten >= 0)
+			{
+				nread -= nwritten;
+				out_ptr += nwritten;
+			}
+			else if (errno != EINTR)
+			{
+				goto out_error;
+			}
+		} while (nread > 0);
+	}
+
+	if (nread == 0)
+	{
+		if (close(fd_to) < 0)
+		{
+			fd_to = -1;
+			goto out_error;
+		}
+		close(fd_from);
+
+		/* Success! */
+		return 0;
+	}
+
+out_error:
+	saved_errno = errno;
+
+	close(fd_from);
+	if (fd_to >= 0)
+		close(fd_to);
+
+	errno = saved_errno;
+	return -1;
+}
 
 int main(int argc, char const* argv[])
 {
@@ -43,7 +108,6 @@ int main(int argc, char const* argv[])
 		int save_stdin_fd = -1, save_stdout_fd = -1;
 
 		/* Execute command (commands if pipe is used) */
-		bool quit_command_queue = false;
 		while ( (com = pop_command()) != NULL ) {
 			dprt("Command: %s\n", com->bin);
 			dprt("Args:\n");
@@ -106,7 +170,12 @@ int main(int argc, char const* argv[])
 				if (com->pipein) {
 					save_stdin_fd = dup(STDIN_FILENO);
 					close(STDIN_FILENO);
-					open(PIPE_FILE, O_RDONLY); /* opens with STDIN_FILENO */
+					/* Copy pipe file to avoid read/write at once */
+					if (cp(PIPE_FILE_COPY, PIPE_FILE) != 0) {
+						fprintf(stderr, "Cannot copy pipe file\n");
+						exit(EXIT_FAILURE);
+					}
+					open(PIPE_FILE_COPY, O_RDONLY); /* opens with STDIN_FILENO */
 				}
 				if (com->pipeout) {
 					save_stdout_fd = dup(STDOUT_FILENO);
@@ -153,6 +222,7 @@ int main(int argc, char const* argv[])
 
 	/* Remove temporary file for pipe */
 	remove(PIPE_FILE);
+	remove(PIPE_FILE_COPY);
 
 	/* Free memory */
 	free(input);
