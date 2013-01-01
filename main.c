@@ -35,23 +35,23 @@ int main(int argc, char const* argv[])
 			break;
 		}
 		init_gv();
-		printf("Parse start: %s\n", input);
+		dprt("Parse start: %s\n", input);
 		yy_scan_string(input);
 		yyparse();
-		printf("Parse end.\n");
+		dprt("Parse end.\n");
 		command* com;
 		int save_stdin_fd = -1, save_stdout_fd = -1;
 
 		/* Execute command (commands if pipe is used) */
 		bool quit_command_queue = false;
 		while ( (com = pop_command()) != NULL ) {
-			printf("Command: %s\n", com->bin);
-			printf("Args:\n");
+			dprt("Command: %s\n", com->bin);
+			dprt("Args:\n");
 			for (i = 0; i < com->argc; i++) {
-				printf("\t%s\n", com->argv[i]);
+				dprt("\t%s\n", com->argv[i]);
 			}
-			printf("Infile: %s, Outfile: %s, Errfile: %s\n", com->infile, com->outfile, com->errfile);
-			printf("PipeIn: %d, PipeOut: %d\n", com->pipein, com->pipeout);
+			dprt("Infile: %s, Outfile: %s, Errfile: %s\n", com->infile, com->outfile, com->errfile);
+			dprt("PipeIn: %d, PipeOut: %d\n", com->pipein, com->pipeout);
 
 			pid_t cpid;
 			if ((cpid = fork()) == -1) {
@@ -59,7 +59,7 @@ int main(int argc, char const* argv[])
 			}
 			else if (cpid == 0) {
 				/* child process */
-				printf("This is child.\n");
+
 				/* Search bin */
 				char bin[1024];
 				for (i = 0; i < g_path_size; i++) {
@@ -74,15 +74,15 @@ int main(int argc, char const* argv[])
 					fprintf(stderr, "Command not found: %s\n", com->bin);
 					exit(EXIT_FAILURE);
 				}
-				printf("Found executable file: %s\n", bin);
+				dprt("Found executable file: %s\n", bin);
 
 				/* Error check about file descriptors */
 				if (strcmp(com->infile, "") != 0 && com->pipein) {
-					fprintf(stderr, "Please do not redirect from file when a command has pipe input.\n");
+					msg("Please do not redirect from file when a command has pipe input.\n");
 					exit(EXIT_FAILURE);
 				}
 				if (strcmp(com->outfile, "") != 0 && com->pipeout) {
-					fprintf(stderr, "Please do not redirect to file when a command has pipe output. Use tee instead.\n");
+					msg("Please do not redirect to file when a command has pipe output. Use tee instead.\n");
 					exit(EXIT_FAILURE);
 				}
 
@@ -133,13 +133,6 @@ int main(int argc, char const* argv[])
 				close(STDOUT_FILENO);
 				dup2(save_stdout_fd, STDOUT_FILENO);
 			}
-			/* Remove temporary file for pipe */
-			if (com->pipein) {
-				if (remove(PIPE_FILE) == -1) {
-					error(0, errno, "Can't remove pipefile: %s\n", PIPE_FILE);
-					exit(EXIT_FAILURE);
-				}
-			}
 
 			/* Free memory */
 			for (i = 0; i < argc; i++) {
@@ -151,12 +144,18 @@ int main(int argc, char const* argv[])
 			/* Stop executing command queue if an error has occurred */
 			if (WEXITSTATUS(status) == EXIT_FAILURE) {
 				while ( (com = pop_command()) != NULL );
-				fprintf(stderr, "Command queue is trashed\n");
 				break;
 			}
 		}
 	}
+
 	/* Termination */
+
+	/* Remove temporary file for pipe */
+	remove(PIPE_FILE);
+
+	/* Free memory */
 	free(input);
-	return 0;
+
+	return EXIT_SUCCESS;
 }

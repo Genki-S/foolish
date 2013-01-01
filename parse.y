@@ -54,12 +54,10 @@ word_list:
 redirection:
 		   '>' WORD
 			{
-				printf("Redirect to %s\n", $2);
 				strcpy(g_outfile, $2);
 			}
 		   | '<' WORD
 			{
-				printf("Redirect from %s\n", $2);
 				strcpy(g_infile, $2);
 			}
 		   ;
