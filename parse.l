@@ -8,12 +8,12 @@ S [./'"\-\\]
 
 %%
 
-({L}|{D}|{S})({L}|{D}|{S})* { printf("WORD: %s\n", yytext); yylval.wval = strdup(yytext); return WORD; }
+({L}|{D}|{S})({L}|{D}|{S})* { yylval.wval = strdup(yytext); return WORD; }
 
-"|" { printf("CHAR: %c\n", '|'); return '|'; }
-">" { printf("CHAR: %c\n", '>'); return '>'; }
-"<" { printf("CHAR: %c\n", '<'); return '<'; }
-"\n" { printf("CHAR: %s\n", "\\n"); return '\n'; }
+"|" { return '|'; }
+">" { return '>'; }
+"<" { return '<'; }
+"\n" { return '\n'; }
 
 . { /* ignore other characters */ }
 
