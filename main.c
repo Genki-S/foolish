@@ -46,6 +46,8 @@ int main(int argc, char const* argv[])
 	while (true) {
 		printf("%s", g_prompt);
 		read = getline(&g_input_line, &len, stdin);
+
+		/* Exit check */
 		if (read == -1) { /* Ctrl-D */
 			break;
 		}
@@ -61,8 +63,9 @@ int main(int argc, char const* argv[])
 
 		/* Execute command (commands if pipes are used) */
 		command* com;
-		int save_stdin_fd = -1, save_stdout_fd = -1;
 		while ( (com = pop_command()) != NULL ) {
+			int save_stdin_fd = -1, save_stdout_fd = -1;
+
 			if ((g_working_child_pid = fork()) == -1) {
 				fprintf(stderr, "fork error\n");
 			}

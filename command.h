@@ -26,7 +26,7 @@ typedef struct {
 	bool pipein, pipeout;
 } command;
 
-void init_gv(void);
+void init_parser_gv(void);
 void register_command(char *bin, int argc, char **argv, char *infile, char *outfile, char *errfile, bool pipein, bool pipeout);
 void register_command_gv(void);
 void push_command(command *c);

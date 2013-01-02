@@ -9,7 +9,7 @@
 command* command_queue[COMMAND_QUEUE_SIZE];
 int q_head, q_tail;
 
-void init_gv()
+void init_parser_gv(void)
 {
 	strcpy(g_bin, "");
 	g_argc = 1;
