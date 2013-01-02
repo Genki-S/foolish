@@ -8,7 +8,7 @@
 |/       (_______)(_______)(_______/\_______/\_______)|/     \|
 
 # これは何？
-Foolish O(TODO) OS Leaner's Interactive SHell
+Foolish Obtuse OS Leaner's Incompetent SHell
 
 # 各ファイルの意味
 
