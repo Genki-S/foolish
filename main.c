@@ -64,8 +64,7 @@ int main(int argc, char const* argv[])
 		/* Execute command (commands if pipes are used) */
 		command* com;
 		while ( (com = pop_command()) != NULL ) {
-			int save_stdin_fd = -1, save_stdout_fd = -1;
-
+			/* Fork and execute */
 			if ((g_working_child_pid = fork()) == -1) {
 				fprintf(stderr, "fork error\n");
 			}
@@ -103,19 +102,16 @@ int main(int argc, char const* argv[])
 						error(0, errno, "Cannot read from %s", com->infile);
 						exit(EXIT_FAILURE);
 					}
-					save_stdin_fd = dup(STDIN_FILENO);
 					close(STDIN_FILENO);
 					open(com->infile, O_RDONLY); /* opens with STDIN_FILENO */
 				}
 				if (strcmp(com->outfile, "") != 0) {
-					save_stdout_fd = dup(STDOUT_FILENO);
 					close(STDOUT_FILENO);
 					open(com->outfile, O_CREAT | O_WRONLY | O_TRUNC, 0777); /* opens with STDOUT_FILENO */
 				}
 
 				/* Pipe settings */
 				if (com->pipein) {
-					save_stdin_fd = dup(STDIN_FILENO);
 					close(STDIN_FILENO);
 					/* Copy pipe file to avoid read/write at once */
 					if (cp(PIPE_FILE_COPY, PIPE_FILE) != 0) {
@@ -125,12 +121,12 @@ int main(int argc, char const* argv[])
 					open(PIPE_FILE_COPY, O_RDONLY); /* opens with STDIN_FILENO */
 				}
 				if (com->pipeout) {
-					save_stdout_fd = dup(STDOUT_FILENO);
 					close(STDOUT_FILENO);
 					open(PIPE_FILE, O_CREAT | O_WRONLY | O_TRUNC, 0777); /* opens with STDOUT_FILENO */
 				}
 				execv(bin, com->argv);
 			}
+
 			/* parent */
 			int status;
 			if (wait(&status) == (pid_t)-1) {
@@ -143,18 +139,8 @@ int main(int argc, char const* argv[])
 			/* Clear child pid */
 			g_working_child_pid = 0;
 
-			/* Restore file descriptors */
-			if (save_stdin_fd != -1) {
-				close(STDIN_FILENO);
-				dup2(save_stdin_fd, STDIN_FILENO);
-			}
-			if (save_stdout_fd != -1) {
-				close(STDOUT_FILENO);
-				dup2(save_stdout_fd, STDOUT_FILENO);
-			}
-
 			/* Free memory */
-			for (i = 0; i < argc; i++) {
+			for (i = 0; i < com->argc; i++) {
 				free(com->argv[i]);
 			}
 			free(com->argv);
