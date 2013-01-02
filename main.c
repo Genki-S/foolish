@@ -16,33 +16,23 @@
 #define PIPE_FILE ".foolish_pipe"
 #define PIPE_FILE_COPY ".foolish_pipe_copy"
 
+/* Externals (to use bison functionality) */
 extern struct yy_buffer_state;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 extern int yyparse(void);
 extern YY_BUFFER_STATE yy_scan_string(char *);
 
+/* Static globals */
 static char *g_prompt = "% ";
 static char *g_input_line = NULL; /* input from user */
 static pid_t g_working_child_pid;
 
+/* Prototype declarations */
+void init(void);
 void terminate(void);
 void trap(int sig);
 
-/* Trap SIGINT */
-void trap(int sig)
-{
-	if (g_working_child_pid == 0) { /* No child process */
-		/* Terminate Foolish */
-		terminate();
-		exit(EXIT_FAILURE);
-	}
-	else {
-		/* send SIGINT to child process (actions are up to programs) */
-		kill(g_working_child_pid, SIGINT);
-		printf("\n");
-	}
-}
-
+/* Main function does basic loop */
 int main(int argc, char const* argv[])
 {
 	int i;
@@ -50,11 +40,7 @@ int main(int argc, char const* argv[])
 	ssize_t read;
 
 	/* Initialize */
-	g_working_child_pid = 0;
-	init_path();
-
-	/* Set trap */
-	signal(SIGINT, trap);
+	init();
 
 	/* Prompt -> read -> analyze -> execute loop */
 	while (true) {
@@ -68,15 +54,16 @@ int main(int argc, char const* argv[])
 			break;
 		}
 
-		init_gv();
+		/* Parse input */
+		init_parser_gv();
 		dprt("Parse start: %s\n", g_input_line);
 		yy_scan_string(g_input_line);
 		yyparse();
 		dprt("Parse end.\n");
+
+		/* Execute command (commands if pipes are used) */
 		command* com;
 		int save_stdin_fd = -1, save_stdout_fd = -1;
-
-		/* Execute command (commands if pipe is used) */
 		while ( (com = pop_command()) != NULL ) {
 			dprt("Command: %s\n", com->bin);
 			dprt("Args:\n");
@@ -195,6 +182,16 @@ int main(int argc, char const* argv[])
 	return EXIT_SUCCESS;
 }
 
+void init(void)
+{
+	/* Init path */
+	init_path();
+	/* child pid: 0 means no child is running */
+	g_working_child_pid = 0;
+	/* Set trap */
+	signal(SIGINT, trap);
+}
+
 void terminate(void)
 {
 	/* Remove temporary file for pipe */
@@ -205,4 +202,18 @@ void terminate(void)
 	free(g_input_line);
 
 	msg("Bye.\n");
+}
+
+void trap(int sig)
+{
+	if (g_working_child_pid == 0) { /* No child process */
+		/* Terminate Foolish */
+		terminate();
+		exit(EXIT_FAILURE);
+	}
+	else {
+		/* send signal to child process (actions are up to programs) */
+		kill(g_working_child_pid, sig);
+		printf("\n");
+	}
 }
