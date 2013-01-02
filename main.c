@@ -162,6 +162,10 @@ int main(int argc, char const* argv[])
 
 void init(void)
 {
+	/* Welcome Message */
+	printf("FOOLISH: Foolish O(TODO) OS Learner's Interactive SHell.\n");
+	printf("Copyright 2012 Genki Sugimoto.\n");
+	printf("This is foolish software with ABSOLUTELY NO WARRANTY.\n");
 	/* Init path */
 	init_path();
 	/* child pid: 0 means no child is running */
