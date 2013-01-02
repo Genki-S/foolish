@@ -1,7 +1,7 @@
 CC = gcc
-CFLAGS = -W -Wall -Wextra -Wunreachable-code -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS =
 # LDFLAGS: flags passed to the compiler for use during linking
-LDFLAGS = -Wl
+LDFLAGS =
 # LIBS: libraries to link with
 LIBS = -lfl
 SOURCES = $(wildcard *.c)
