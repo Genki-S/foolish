@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/wait.h>
 #include <error.h>
 #include <errno.h>
@@ -18,6 +19,23 @@ extern struct yy_buffer_state;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 extern int yyparse(void);
 extern YY_BUFFER_STATE yy_scan_string(char *);
+
+static char *g_prompt = "% ";
+static pid_t g_working_child_pid;
+
+/* Trap SIGINT */
+void trap(int sig)
+{
+	if (g_working_child_pid == 0) { /* No child process */
+		fprintf(stderr, "Please type 'exit' to exit.\n");
+		printf("%s ", g_prompt);
+	}
+	else {
+		/* send SIGINT to child process (actions are up to programs) */
+		kill(g_working_child_pid, SIGINT);
+		printf("\n");
+	}
+}
 
 /*
  * To copy pipe output
@@ -85,16 +103,19 @@ out_error:
 int main(int argc, char const* argv[])
 {
 	int i;
-	char *prompt = "% ";
 	char *input = NULL;
 	size_t len = 0;
 	ssize_t read;
 
+	/* Initialize */
 	init_path();
+
+	/* Set trap */
+	signal(SIGINT, trap);
 
 	/* Prompt -> read -> analyze -> execute loop */
 	while (true) {
-		printf("%s", prompt);
+		printf("%s", g_prompt);
 		read = getline(&input, &len, stdin);
 		if (read == -1) { /* Ctrl-D */
 			break;
@@ -122,11 +143,10 @@ int main(int argc, char const* argv[])
 			dprt("Infile: %s, Outfile: %s, Errfile: %s\n", com->infile, com->outfile, com->errfile);
 			dprt("PipeIn: %d, PipeOut: %d\n", com->pipein, com->pipeout);
 
-			pid_t cpid;
-			if ((cpid = fork()) == -1) {
+			if ((g_working_child_pid = fork()) == -1) {
 				fprintf(stderr, "fork error\n");
 			}
-			else if (cpid == 0) {
+			else if (g_working_child_pid == 0) {
 				/* child process */
 
 				/* Search bin */
@@ -224,6 +244,9 @@ int main(int argc, char const* argv[])
 	}
 
 	/* Termination */
+
+	/* Clear child pid */
+	g_working_child_pid = 0;
 
 	/* Remove temporary file for pipe */
 	remove(PIPE_FILE);
