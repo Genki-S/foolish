@@ -26,7 +26,7 @@ lex.yy.c: parse.l parse.tab.h
 .PHONY: clean cleanest
 
 clean:
-	rm *.o
+	rm -f *.o
 
 cleanest: clean
-	rm $(EXE) parse.tab.*
+	rm -f $(EXE) lex.yy.c parse.tab.*
