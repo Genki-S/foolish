@@ -22,14 +22,19 @@ extern int yyparse(void);
 extern YY_BUFFER_STATE yy_scan_string(char *);
 
 static char *g_prompt = "% ";
+static char *g_input_line = NULL; /* input from user */
 static pid_t g_working_child_pid;
+
+void terminate(void);
+void trap(int sig);
 
 /* Trap SIGINT */
 void trap(int sig)
 {
 	if (g_working_child_pid == 0) { /* No child process */
-		msg("Please type 'exit' to exit.\n");
-		printf("%s ", g_prompt);
+		/* Terminate Foolish */
+		terminate();
+		exit(EXIT_FAILURE);
 	}
 	else {
 		/* send SIGINT to child process (actions are up to programs) */
@@ -41,7 +46,6 @@ void trap(int sig)
 int main(int argc, char const* argv[])
 {
 	int i;
-	char *input = NULL;
 	size_t len = 0;
 	ssize_t read;
 
@@ -55,18 +59,18 @@ int main(int argc, char const* argv[])
 	/* Prompt -> read -> analyze -> execute loop */
 	while (true) {
 		printf("%s", g_prompt);
-		read = getline(&input, &len, stdin);
+		read = getline(&g_input_line, &len, stdin);
 		if (read == -1) { /* Ctrl-D */
 			break;
 		}
-		if (strcmp(input, "exit\n") == 0) {
+		if (strcmp(g_input_line, "exit\n") == 0) {
 			msg("Wise command. Obviously, you should use zsh :)\n");
 			break;
 		}
 
 		init_gv();
-		dprt("Parse start: %s\n", input);
-		yy_scan_string(input);
+		dprt("Parse start: %s\n", g_input_line);
+		yy_scan_string(g_input_line);
 		yyparse();
 		dprt("Parse end.\n");
 		command* com;
@@ -186,13 +190,19 @@ int main(int argc, char const* argv[])
 	}
 
 	/* Termination */
+	terminate();
 
+	return EXIT_SUCCESS;
+}
+
+void terminate(void)
+{
 	/* Remove temporary file for pipe */
 	remove(PIPE_FILE);
 	remove(PIPE_FILE_COPY);
 
 	/* Free memory */
-	free(input);
+	free(g_input_line);
 
-	return EXIT_SUCCESS;
+	msg("Bye.\n");
 }
