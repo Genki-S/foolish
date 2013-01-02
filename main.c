@@ -56,23 +56,13 @@ int main(int argc, char const* argv[])
 
 		/* Parse input */
 		init_parser_gv();
-		dprt("Parse start: %s\n", g_input_line);
 		yy_scan_string(g_input_line);
 		yyparse();
-		dprt("Parse end.\n");
 
 		/* Execute command (commands if pipes are used) */
 		command* com;
 		int save_stdin_fd = -1, save_stdout_fd = -1;
 		while ( (com = pop_command()) != NULL ) {
-			dprt("Command: %s\n", com->bin);
-			dprt("Args:\n");
-			for (i = 0; i < com->argc; i++) {
-				dprt("\t%s\n", com->argv[i]);
-			}
-			dprt("Infile: %s, Outfile: %s, Errfile: %s\n", com->infile, com->outfile, com->errfile);
-			dprt("PipeIn: %d, PipeOut: %d\n", com->pipein, com->pipeout);
-
 			if ((g_working_child_pid = fork()) == -1) {
 				fprintf(stderr, "fork error\n");
 			}
@@ -93,7 +83,6 @@ int main(int argc, char const* argv[])
 					fprintf(stderr, "Command not found: %s\n", com->bin);
 					exit(EXIT_FAILURE);
 				}
-				dprt("Found executable file: %s\n", bin);
 
 				/* Error check about file descriptors */
 				if (strcmp(com->infile, "") != 0 && com->pipein) {
