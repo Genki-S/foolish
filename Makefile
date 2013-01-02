@@ -3,7 +3,7 @@ CFLAGS = -W -Wall -Wextra -Wunreachable-code -Wstrict-prototypes -Wmissing-proto
 # LDFLAGS: flags passed to the compiler for use during linking
 LDFLAGS = -Wl
 # LIBS: libraries to link with
-LIBS = -lefence -lfl
+LIBS = -lfl
 SOURCES = $(wildcard *.c)
 OBJECTS = $(SOURCES:.c=.o)
 EXE = foolish
