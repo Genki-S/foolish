@@ -27,7 +27,7 @@ input:
 		{
 			register_command_gv();
 		}
-	 | single_command { g_pipeout = true; register_command_gv(); init_gv(); g_pipein = true; } '|' input
+	 | single_command { g_pipeout = true; register_command_gv(); init_parser_gv(); g_pipein = true; } '|' input
 	 | '\n'
 	 ;
 
