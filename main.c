@@ -28,7 +28,7 @@ static pid_t g_working_child_pid;
 void trap(int sig)
 {
 	if (g_working_child_pid == 0) { /* No child process */
-		fprintf(stderr, "Please type 'exit' to exit.\n");
+		msg("Please type 'exit' to exit.\n");
 		printf("%s ", g_prompt);
 	}
 	else {
@@ -46,6 +46,7 @@ int main(int argc, char const* argv[])
 	ssize_t read;
 
 	/* Initialize */
+	g_working_child_pid = 0;
 	init_path();
 
 	/* Set trap */
@@ -156,6 +157,9 @@ int main(int argc, char const* argv[])
 
 			/* CLEAN UP */
 
+			/* Clear child pid */
+			g_working_child_pid = 0;
+
 			/* Restore file descriptors */
 			if (save_stdin_fd != -1) {
 				close(STDIN_FILENO);
@@ -182,9 +186,6 @@ int main(int argc, char const* argv[])
 	}
 
 	/* Termination */
-
-	/* Clear child pid */
-	g_working_child_pid = 0;
 
 	/* Remove temporary file for pipe */
 	remove(PIPE_FILE);
