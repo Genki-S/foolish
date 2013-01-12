@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 #include <error.h>
 #include <errno.h>
 
@@ -9,17 +10,17 @@
 
 void init_path(void)
 {
-	FILE *fp;
+	int fd;
 	char *row;
 	int i, len;
 
-	fp = fopen(PATH_FILE, "r");
-	if (fp == NULL) {
+	fd = open(PATH_FILE, O_RDONLY);
+	if (fd == -1) {
 		error(0, errno, "File cannot be opened.");
 		exit(EXIT_FAILURE);
 	}
 	row = malloc(sizeof(char) * MAX_PATH_NUM * MAX_PATH_LENGTH);
-	fgets(row, sizeof(char) * MAX_PATH_NUM * MAX_PATH_LENGTH, fp);
+	read(fd, row, sizeof(char) * MAX_PATH_NUM * MAX_PATH_LENGTH);
 	g_paths[0] = row;
 	g_path_size = 1;
 	len = strlen(row);
