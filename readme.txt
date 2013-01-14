@@ -12,7 +12,34 @@ Foolish Obtuse OS Leaner's Incompetent SHell
 
 # 各ファイルの意味
 
+    + メタファイル
+        * readme.txt : プログラムの説明。このファイルです。
+        * Makefile   : makeのルール。
+        * .path      : path設定ファイル。お好みで編集して下さい。
+        * .blankcmd  : ブランクコマンド設定ファイル。お好みで編集して下さい。
+                       プロンプトで改行のみを入力したときに実行するコマンドを指定できます。
+
+    + プログラムファイル
+        * mysh.c     : メインのファイル。プログラムの実行の管理。
+        * common.h   : プログラム全体で使う定義、変数型等
+        * command.c  : ユーザーが入力したコマンドを管理する関数群
+        * command.h  : command.cに関連したグローバル変数定義、関数プロトタイプ宣言等
+        * path.c     : pathを管理する関数群
+        * path.h     : path.cに関連したグローバル変数定義、関数プロトタイプ宣言等
+        * blankcmd.c : ブランクコマンドを管理する関数群
+        * blankcmd.h : blankcmd.cに関連したグローバル変数定義、関数プロトタイプ宣言等
+
+    + flex/bisonファイル
+        * parse.l    : flex用の字句定義
+        * parse.y    : bison用の文法定義
+
 # コンパイル方法
+        `make`
+    ただし、flexおよびbisonがインストールされている必要があります。
 
 # 実行方法
+        `./foolish`
 
+# 制作者
+    Genki Sugimoto <genki-sugimoto@asagi.waseda.jp>
+    動作に不具合がある場合はご連絡ください。
