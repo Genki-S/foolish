@@ -17,6 +17,8 @@ void init_path(void)
 	fd = open(PATH_FILE, O_RDONLY);
 	if (fd == -1) {
 		error(0, errno, "File cannot be opened.");
+		fprintf(stderr, "Maybe you don't have '.path' file. Please create it and specify your path.\n");
+		fprintf(stderr, "  Format is conventional (i.e. PATH1;PATH2;PATH3 in one line). \n");
 		exit(EXIT_FAILURE);
 	}
 	row = malloc(sizeof(char) * MAX_PATH_NUM * MAX_PATH_LENGTH);
