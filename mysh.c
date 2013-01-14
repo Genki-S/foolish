@@ -90,17 +90,26 @@ int main(int argc, char const* argv[])
 
 				/* Search bin */
 				char bin[1024];
-				for (i = 0; i < g_path_size; i++) {
-					strcpy(bin, g_paths[i]);
-					strcat(bin, "/");
-					strcat(bin, com->bin);
-					if (access(bin, X_OK) == 0) { /* executable command found */
-						break;
+				if (com->bin[0] == '/') { /* Absolute path */
+					strcpy(bin, com->bin);
+					if (access(bin, X_OK) != 0) {
+						fprintf(stderr, "Command not found: %s\n", com->bin);
+						exit(EXIT_FAILURE);
 					}
 				}
-				if (i == g_path_size) {
-					fprintf(stderr, "Command not found: %s\n", com->bin);
-					exit(EXIT_FAILURE);
+				else { /* Search path for executable */
+					for (i = 0; i < g_path_size; i++) {
+						strcpy(bin, g_paths[i]);
+						strcat(bin, "/");
+						strcat(bin, com->bin);
+						if (access(bin, X_OK) == 0) { /* executable command found */
+							break;
+						}
+					}
+					if (i == g_path_size) {
+						fprintf(stderr, "Command not found: %s\n", com->bin);
+						exit(EXIT_FAILURE);
+					}
 				}
 
 				/* Error check about file descriptors */
