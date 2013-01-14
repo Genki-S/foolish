@@ -5,6 +5,8 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <error.h>
 #include <errno.h>
 
@@ -31,6 +33,7 @@ static pid_t g_working_child_pid;
 void init(void);
 void terminate(void);
 void trap(int sig);
+bool is_dir(char* path);
 
 /* Main function does basic loop */
 int main(int argc, char const* argv[])
@@ -92,7 +95,7 @@ int main(int argc, char const* argv[])
 				char bin[1024];
 				if (com->bin[0] == '/') { /* Absolute path */
 					strcpy(bin, com->bin);
-					if (access(bin, X_OK) != 0) {
+					if (access(bin, X_OK) != 0 || is_dir(bin)) {
 						fprintf(stderr, "Command not found: %s\n", com->bin);
 						exit(EXIT_FAILURE);
 					}
@@ -102,7 +105,7 @@ int main(int argc, char const* argv[])
 						strcpy(bin, g_paths[i]);
 						strcat(bin, "/");
 						strcat(bin, com->bin);
-						if (access(bin, X_OK) == 0) { /* executable command found */
+						if (access(bin, X_OK) == 0 && !is_dir(bin)) { /* executable command found */
 							break;
 						}
 					}
@@ -235,5 +238,22 @@ void trap(int sig)
 		/* send signal to child process (actions are up to programs) */
 		kill(g_working_child_pid, sig);
 		printf("\n");
+	}
+}
+
+bool is_dir(char* path)
+{
+	struct stat s;
+	if (stat(path, &s) == 0) {
+		if (s.st_mode & S_IFDIR) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	else {
+		error(0, errno, "Cannot stat");
+		exit(EXIT_FAILURE);
 	}
 }
