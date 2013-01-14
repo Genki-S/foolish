@@ -11,6 +11,7 @@
 #include "common.h"
 #include "command.h"
 #include "path.h"
+#include "blankcmd.h"
 
 /* Pipe syntax suger */
 enum PIPE { READ, WRITE };
@@ -55,6 +56,11 @@ int main(int argc, char const* argv[])
 		if (strcmp(g_input_line, "exit\n") == 0) {
 			msg("Wise command. Obviously, you should use zsh :)\n");
 			break;
+		}
+
+		/* Blank command */
+		if (strcmp(g_input_line, "\n") == 0) {
+			blankcmd(g_input_line);
 		}
 
 		/* Parse input */
@@ -193,6 +199,8 @@ void init(void)
 	printf("This is foolish software with ABSOLUTELY NO WARRANTY.\n");
 	/* Init path */
 	init_path();
+	/* Init blank command */
+	init_blankcmd();
 	/* child pid: 0 means no child is running */
 	g_working_child_pid = 0;
 	/* Set trap */

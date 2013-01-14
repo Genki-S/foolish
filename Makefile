@@ -4,7 +4,7 @@ CFLAGS =
 LDFLAGS =
 # LIBS: libraries to link with
 LIBS = -lfl
-SOURCES = command.c lex.yy.c mysh.c parse.tab.c path.c
+SOURCES = command.c lex.yy.c mysh.c parse.tab.c path.c blankcmd.c
 OBJECTS = $(SOURCES:.c=.o)
 EXE = foolish
 
