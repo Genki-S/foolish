@@ -9,7 +9,6 @@
 #include <errno.h>
 
 #include "common.h"
-#include "util.h"
 #include "command.h"
 #include "path.h"
 
