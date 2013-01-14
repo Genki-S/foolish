@@ -13,8 +13,8 @@
 #include "command.h"
 #include "path.h"
 
-#define PIPE_FILE ".foolish_pipe"
-#define PIPE_FILE_COPY ".foolish_pipe_copy"
+/* Pipe syntax suger */
+enum PIPE { READ, WRITE };
 
 /* Externals (to use bison functionality) */
 extern struct yy_buffer_state;
@@ -37,7 +37,9 @@ int main(int argc, char const* argv[])
 {
 	int i;
 	size_t len = 0;
-	ssize_t read;
+	ssize_t n;
+	int pipe_p2c[2], pipe_c2p[2]; /* interaction between patent and child */
+	int prevcom_pipe_output_fd = 100; /* dup pipe output for later use (use big integer to organize fds) */
 
 	/* Initialize */
 	init();
@@ -45,10 +47,10 @@ int main(int argc, char const* argv[])
 	/* Prompt -> read -> analyze -> execute loop */
 	while (true) {
 		printf("%s", g_prompt);
-		read = getline(&g_input_line, &len, stdin);
+		n = getline(&g_input_line, &len, stdin);
 
 		/* Exit check */
-		if (read == -1) { /* Ctrl-D */
+		if (n == -1) { /* Ctrl-D */
 			break;
 		}
 		if (strcmp(g_input_line, "exit\n") == 0) {
@@ -64,12 +66,22 @@ int main(int argc, char const* argv[])
 		/* Execute command (commands if pipes are used) */
 		command* com;
 		while ( (com = pop_command()) != NULL ) {
+			/* Prepare pipes */
+			if (pipe(pipe_c2p) < 0) {
+				error(0, errno, "Pipe"); exit(EXIT_FAILURE);
+			}
+			if (pipe(pipe_p2c) < 0) {
+				error(0, errno, "Pipe"); exit(EXIT_FAILURE);
+			}
+
 			/* Fork and execute */
 			if ((g_working_child_pid = fork()) == -1) {
 				fprintf(stderr, "fork error\n");
 			}
 			else if (g_working_child_pid == 0) {
 				/* child process */
+				close(pipe_p2c[WRITE]);
+				close(pipe_c2p[READ]);
 
 				/* Search bin */
 				char bin[1024];
@@ -112,27 +124,41 @@ int main(int argc, char const* argv[])
 
 				/* Pipe settings */
 				if (com->pipein) {
-					close(STDIN_FILENO);
-					/* Copy pipe file to avoid read/write at once */
-					if (cp(PIPE_FILE_COPY, PIPE_FILE) != 0) {
-						fprintf(stderr, "Cannot copy pipe file\n");
-						exit(EXIT_FAILURE);
-					}
-					open(PIPE_FILE_COPY, O_RDONLY); /* opens with STDIN_FILENO */
+					dup2(pipe_p2c[READ], STDIN_FILENO);
 				}
 				if (com->pipeout) {
-					close(STDOUT_FILENO);
-					open(PIPE_FILE, O_CREAT | O_WRONLY | O_TRUNC, 0777); /* opens with STDOUT_FILENO */
+					dup2(pipe_c2p[WRITE], STDOUT_FILENO);
 				}
+				close(pipe_p2c[READ]);
+				close(pipe_c2p[WRITE]);
 				execv(bin, com->argv);
 			}
 
 			/* parent */
+			close(pipe_p2c[READ]);
+			close(pipe_c2p[WRITE]);
+
+			/* Write previous pipe output if necessary */
+			char buf[BUFSIZ];
+			if (com->pipein) {
+				while ((n = read(prevcom_pipe_output_fd, buf, BUFSIZ)) > 0) {
+					write(pipe_p2c[WRITE], buf, n);
+				}
+			}
+			close(pipe_p2c[WRITE]);
+
 			int status;
 			if (wait(&status) == (pid_t)-1) {
 				fprintf(stderr, "wait error\n");
 				exit(EXIT_FAILURE);
 			}
+
+			/* Keep pipe output if necessary */
+			if (com->pipeout) {
+				dup2(pipe_c2p[READ], prevcom_pipe_output_fd);
+			}
+			close(pipe_c2p[READ]);
+
 
 			/* CLEAN UP */
 
@@ -176,10 +202,6 @@ void init(void)
 
 void terminate(void)
 {
-	/* Remove temporary file for pipe */
-	remove(PIPE_FILE);
-	remove(PIPE_FILE_COPY);
-
 	/* Free memory */
 	free(g_input_line);
 
